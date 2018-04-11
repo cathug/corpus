@@ -1,14 +1,16 @@
 # code to automate tokenization with online LIVAC tokenizer
 
-import requests, re, csv
+import requests, re, csv, pickle, time
 from requests import Session
 from requests.utils import dict_from_cookiejar
 from pprint import pprint
 from bs4 import BeautifulSoup
+import numpy as np
+import pandas as pd
 
 # global variables
 URL = 'http://www.livac.org/seg/livac_seg_index.php'
-CSV_PATH = r'/home/lun/Desktop/'
+# CSV_PATH = r'/home/lun/Desktop/'
 
 
 # Function to post unsegmented strings
@@ -75,13 +77,23 @@ def outputCSV(file_name, header_names, parsed_list):
     assert(f.closed)
 
 
+def pickleDataframe(dataframe, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(dataframe, f)
+    assert f.closed
+
+
+def depickleDataframe(filename):
+    with open(filename, 'rb') as f:
+        dataframe = pickle.load(f, encoding='utf-8')
+    assert f.closed
+    return dataframe
+
 
 # main function
 def main():
-    text_list = [
-        "全國政協在北京舉行小組會議，審議政協常委會工作報告。",
-        "今年全國人大會議由周一起至本月20日閉幕，特首林鄭月娥會列席。"
-    ]
+    # depickle wiki dump
+    df_wiki = depickleDataframe("pickled_wiki_entries.p")
 
     lang = 'tc'
 
@@ -106,7 +118,7 @@ def main():
     # Do this n times
     # get response from POST
     parsed_strings = []
-    for text in text_list:
+    for text in df_wiki['text']:
         if len(text) > 1000:
             "Input string too long.  Must be 1000 characters or less."
             return
@@ -119,13 +131,20 @@ def main():
             return
 
         parsed_strings.append(parseTokenizedText(response.text))
+        time.delay(5) # to not crash server, delay for 5 seconds 
 
 
-    # create a list to save all processed text
-    # output results to a csv file
-    csv_header = ["original_text", "tokens"]
-    outputCSV("tokens.txt", csv_header, parsed_strings)
 
+    # # create a list to save all processed text
+    # # output results to a csv file
+    # csv_header = ["original_text", "tokens"]
+    # outputCSV("tokens.txt", csv_header, parsed_strings)
+    df_wiki['tokens'] = pd.Series(parsed_strings)
+
+    pickleDataframe(df_wiki, "updated_pickled_wiki_entries.p")
+
+    s.close() # close the TCP connection
+    return 0
 
 if __name__ == '__main__':
     main()
