@@ -10,11 +10,20 @@ from pprint import pprint
 from bs4 import BeautifulSoup
 import numpy as np
 import pandas as pd
+from itertools import cycle
 
 # global variables
 URL = 'http://www.livac.org/seg/livac_seg_index.php'
 # CSV_PATH = r'/home/lun/Desktop/'
-PICKLE_PATH = '/home/csrp/csrp/code/early_warning_system/'
+PICKLE_PATH = '/home/lun/csrp/code/early_warning_system/pickle/'
+
+PROXIES = {
+  'http': 'http://113.254.44.242:80',
+  'http': 'http://47.90.87.225:88',
+  'http': 'http://45.115.39.139:7777'
+}
+
+PROXY = next(cycle(PROXIES))
 
 #-------------------------------------------------------------------------------
 
@@ -41,7 +50,7 @@ def postUnsegmentedString(session, unseg_string, lang):
 
     # pr = requests_retry_session(
     #     retries=10, session=session).post(URL, data=form_data)
-    pr = session.post(URL, data=form_data)
+    pr = session.post(URL, data=form_data)#, proxies={"http": PROXY, "https": PROXY})
     if pr.status_code == requests.codes.ok: # returns a 200 OK
         print("POST Response ok")
         return pr
@@ -139,27 +148,57 @@ def depickleDataframe(filename):
 
 #-------------------------------------------------------------------------------
 
+def readTableIndexLog():
+    with open('index.log', 'r') as f:
+        pos = f.read()
+    if f.closed:
+        return int(pos)
+    return None
+
+#-------------------------------------------------------------------------------
+
+def writeTableIndexLog(position):
+    with open('index.log', 'w') as f:
+        f.write(str(position) )
+    if f.closed:
+        return True
+    return False
+
+#-------------------------------------------------------------------------------
+
 # main function
 def main():
-
-    if len(sys.argv) == 2:
+    # argument checks
+    if len(sys.argv) != 4:
         print("Invalid number of arguments.  Two required")
         return
 
-    # depickle wiki dump
-    df_wiki = depickleDataframe(PICKLE_PATH + "pickled_wiki_entries_%s.p" % sys.argv[1])
+    if int(sys.argv[-1]) == 1:
+        # depickle wiki dump
+        df_wiki = depickleDataframe(
+            PICKLE_PATH + "pickled_wiki_entries_%s.p" % sys.argv[1])
+        startpos = 0
+
+    elif int(sys.argv[-1]) == 0:
+        df_wiki = depickleDataframe("backup.p")
+        startpos = readTableIndexLog()
+        print(startpos)
+    else:
+        print("Invalid argument in Pos 4.  Only 1 or 0 accepted.")
+        return
+
+    # return
 
     # Traditional Chinese
     lang = 'tc'
     delay = sys.argv[2]
 
 
-
     # init session
     payload = {'lang' : lang}
     s = requests_retry_session()
     # s = requests.Session()
-    gr = s.get(URL, params=payload)
+    gr = s.get(URL, params=payload)#, proxies={"http": PROXY, "https": PROXY})
     if gr == None:
         print("Session failed")
         return
@@ -178,7 +217,7 @@ def main():
 
     # Do this n times
     # get response from POST
-    for i, text in enumerate(df_wiki['text'].tolist() ):
+    for i, text in enumerate(df_wiki['text'].tolist(), startpos ):
         print('Scraping entry #%d\n' %i)
         text_length = len(text)
 
@@ -189,29 +228,32 @@ def main():
             print("Input string too long.  Must be 1000 characters or less.\n")
 
         else:
-            response = postUnsegmentedString(s, text, lang)
-            if not response:
+            try:
+                response = postUnsegmentedString(s, text, lang)
+            except:
                 if i > 0:
                     pickleDataframe(df_wiki, 'backup.p')
+                    writeTableIndexLog(i)
                 s.close() # all cases
                 return
 
-            # PHPSESSID = dict_from_cookiejar(s.cookies)['PHPSESSID'] # get PHPSESSID
-            # print(PHPSESSID)
+            else:
+                # PHPSESSID = dict_from_cookiejar(s.cookies)['PHPSESSID'] # get PHPSESSID
+                # print(PHPSESSID)
+                ptt_response = parseTokenizedText(response.text)
+                if ptt_response == -1:
+                    print("IP has exceeded daily limit.")
+                    pickleDataframe(df_wiki, 'backup.p')
+                    writeTableIndexLog(i)
+                    s.close()
+                    return
 
-            ptt_response = parseTokenizedText(response.text)
-            if ptt_response == -1:
-                print("IP has exceeded daily limit.")
-                pickleDataframe(df_wiki, 'backup.p')
-                s.close()
-                return
+                # otherwise save to dataframe
+                df_wiki.loc[df_wiki.index == i, 'tokens'] = ptt_response
 
-            # otherwise save to dataframe
-            df_wiki.loc[df_wiki.index == i, 'tokens'] = ptt_response
-
-            print("delaying for %s seconds\n" % delay)
-            time.sleep(delay) # to not crash server, delay next request for >2 seconds
-            print("------------------------")
+                print("delaying for %s seconds\n" % delay)
+                time.sleep(int(delay)) # to not crash server, delay next request for >2 seconds
+                print("------------------------")
 
 
     # # create a list to save all processed text
