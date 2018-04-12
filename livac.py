@@ -1,8 +1,9 @@
 # code to automate tokenization with online LIVAC tokenizer
+# TODO: add postgre and sqlalchemy code
 
-import requests, re, csv, pickle, time
+import requests, re, csv, pickle, time, sys
 from requests import Session
-from requests.utils import dict_from_cookiejar
+# from requests.utils import dict_from_cookiejar
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from pprint import pprint
@@ -13,6 +14,7 @@ import pandas as pd
 # global variables
 URL = 'http://www.livac.org/seg/livac_seg_index.php'
 # CSV_PATH = r'/home/lun/Desktop/'
+PICKLE_PATH = '/home/csrp/csrp/code/early_warning_system/'
 
 #-------------------------------------------------------------------------------
 
@@ -37,8 +39,9 @@ def postUnsegmentedString(session, unseg_string, lang):
         'search' : unseg_string
     }
 
-    pr = requests_retry_session(
-        retries=10, session=session).post(URL, data=form_data)
+    # pr = requests_retry_session(
+    #     retries=10, session=session).post(URL, data=form_data)
+    pr = session.post(URL, data=form_data)
     if pr.status_code == requests.codes.ok: # returns a 200 OK
         print("POST Response ok")
         return pr
@@ -56,10 +59,19 @@ def parseTokenizedText(html_body):
     # html5lib parser keeps English in place, unlike html.parser
     # which removes them
     bs = BeautifulSoup(html_body, "html5lib")
+
+    # returns -1 if limit has been exceeded
+    if '使用次數已達上限' in str(bs.find('div', class_='header')):
+        return -1
+
+    # otherwise
     original_text = bs.find("textarea", id="search")
     tokens = bs.find("textarea", id="segmentResult")
+    if tokens is None: # can't find token string
+        return None
+
     # return original_text.text, re.sub(r'[\<\>]', '', tokens.text)
-    return re.sub(r'[\<\>]', '', tokens.text)
+    return re.sub(r'[\<\>]', '', tokens.text) # otherwise
 
 #-------------------------------------------------------------------------------
 
@@ -87,26 +99,27 @@ def requests_retry_session(retries=8,
 
 #-------------------------------------------------------------------------------
 
-# Function to output parsed strings to a CSV file
-# parameters:   file_name - intended file name
-#               header_names - given header names
-#               parsed_list - an ordered dictionary of elements
-# returns:      the original text input and tokenized output
-def outputCSV(file_name, header_names, parsed_list):
-    with open(CSV_PATH + file_name, 'a', encoding='utf-8') as f:
-        writer = csv.writer(f)
-
-        # first write a header
-        writer.writerow(header_names)
-
-        # write row by row
-        for original_text, tokens in parsed_list:
-            writer.writerow([original_text, tokens])
-
-    assert(f.closed)
+# # Function to output parsed strings to a CSV file
+# # parameters:   file_name - intended file name
+# #               header_names - given header names
+# #               parsed_list - an ordered dictionary of elements
+# # returns:      the original text input and tokenized output
+# def outputCSV(file_name, header_names, parsed_list):
+#     with open(CSV_PATH + file_name, 'a', encoding='utf-8') as f:
+#         writer = csv.writer(f)
+#
+#         # first write a header
+#         writer.writerow(header_names)
+#
+#         # write row by row
+#         for original_text, tokens in parsed_list:
+#             writer.writerow([original_text, tokens])
+#
+#     assert(f.closed)
 
 #-------------------------------------------------------------------------------
 
+# function to pickle dataframe
 def pickleDataframe(dataframe, filename):
     with open(filename, 'wb') as f:
         pickle.dump(dataframe, f)
@@ -116,10 +129,11 @@ def pickleDataframe(dataframe, filename):
 
 #-------------------------------------------------------------------------------
 
+# function to depickle dataframe
 def depickleDataframe(filename):
     with open(filename, 'rb') as f:
         dataframe = pickle.load(f, encoding='utf-8')
-    if f.closed
+    if f.closed:
         return dataframe
     return False
 
@@ -127,15 +141,25 @@ def depickleDataframe(filename):
 
 # main function
 def main():
+
+    if len(sys.argv) == 2:
+        print("Invalid number of arguments.  Two required")
+        return
+
     # depickle wiki dump
-    df_wiki = depickleDataframe("/home/lun/csrp/code/early_warning_system/pickled_wiki_entries.p")
+    df_wiki = depickleDataframe(PICKLE_PATH + "pickled_wiki_entries_%s.p" % sys.argv[1])
 
     # Traditional Chinese
     lang = 'tc'
+    delay = sys.argv[2]
+
+
 
     # init session
     payload = {'lang' : lang}
-    gr = requests_retry_session().get(URL, params=payload)
+    s = requests_retry_session()
+    # s = requests.Session()
+    gr = s.get(URL, params=payload)
     if gr == None:
         print("Session failed")
         return
@@ -155,6 +179,7 @@ def main():
     # Do this n times
     # get response from POST
     for i, text in enumerate(df_wiki['text'].tolist() ):
+        print('Scraping entry #%d\n' %i)
         text_length = len(text)
 
         if text_length < 2:
@@ -165,16 +190,28 @@ def main():
 
         else:
             response = postUnsegmentedString(s, text, lang)
-            PHPSESSID = dict_from_cookiejar(s.cookies)['PHPSESSID'] # get PHPSESSID
-            # print(PHPSESSID)
             if not response:
+                if i > 0:
+                    pickleDataframe(df_wiki, 'backup.p')
+                s.close() # all cases
+                return
+
+            # PHPSESSID = dict_from_cookiejar(s.cookies)['PHPSESSID'] # get PHPSESSID
+            # print(PHPSESSID)
+
+            ptt_response = parseTokenizedText(response.text)
+            if ptt_response == -1:
+                print("IP has exceeded daily limit.")
+                pickleDataframe(df_wiki, 'backup.p')
                 s.close()
                 return
 
-            df_wiki.loc[df_wiki.index == i, 'tokens'] = \
-                parseTokenizedText(response.text)
-            print("delaying for 5 seconds")
-            time.sleep(5) # to not crash server, delay next request for 5 seconds
+            # otherwise save to dataframe
+            df_wiki.loc[df_wiki.index == i, 'tokens'] = ptt_response
+
+            print("delaying for %s seconds\n" % delay)
+            time.sleep(delay) # to not crash server, delay next request for >2 seconds
+            print("------------------------")
 
 
     # # create a list to save all processed text
@@ -182,7 +219,7 @@ def main():
     # csv_header = ["original_text", "tokens"]
     # outputCSV("tokens.txt", csv_header, parsed_strings)
 
-    pickleDataframe(df_wiki, "updated_pickled_wiki_entries.p")
+    pickleDataframe(df_wiki, "updated_pickled_wiki_entries_%s.p" % sys.argv[1])
 
     s.close() # close the TCP connection
     return 0
