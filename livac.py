@@ -1,21 +1,29 @@
 # code to automate tokenization with online LIVAC tokenizer
 # TODO: add postgre and sqlalchemy code
 
-import requests, re, csv, pickle, time, sys
+import re, csv, pickle, time, sys, textwrap
+from itertools import cycle
+
+import requests
 from requests import Session
 # from requests.utils import dict_from_cookiejar
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+
 from pprint import pprint
 from bs4 import BeautifulSoup
+
 import numpy as np
 import pandas as pd
-from itertools import cycle
+
+# postgre database binders
+import psycopg2
+
 
 # global variables
 URL = 'http://www.livac.org/seg/livac_seg_index.php'
 # CSV_PATH = r'/home/lun/Desktop/'
-PICKLE_PATH = '/home/lun/csrp/code/early_warning_system/pickle/'
+PICKLE_PATH = '/home/csrp/csrp/code/corpus/pickle/'
 
 PROXIES = {
   'http': 'http://113.254.44.242:80',
@@ -24,6 +32,26 @@ PROXIES = {
 }
 
 PROXY = next(cycle(PROXIES))
+
+#-------------------------------------------------------------------------------
+
+def printUsage():
+    print(textwrap.dedent(
+        '''
+            Extraction Instructions:
+            ------------------------
+            1. Enable Python Virtual Environment
+            2. Run the script:
+                    $ python livac.py PICKLE_FILE_NUM TIME_DELAY IS_RESUME
+               where:
+                    PICKLE_FILE_NUM     the pickle file number X, i.e.
+                                            pickled_wiki_entries_X.p
+                    TIME_DELAY          the number of delayed seconds
+                                            between scrapes (int)
+                    IS_RESUME           whether to resume from unfinished
+                                            scrape. 0 for false, 1 for true.
+        '''
+    ))
 
 #-------------------------------------------------------------------------------
 
@@ -55,7 +83,8 @@ def postUnsegmentedString(session, unseg_string, lang):
         print("POST Response ok")
         return pr
     else:
-        print("POST Response returns status code %d" % pr.status_code)
+        raise requests.ConnectionError(
+            'POST Response returns a status code %d.' % pr.status_code )
         return None
 
 #-------------------------------------------------------------------------------
@@ -67,17 +96,21 @@ def postUnsegmentedString(session, unseg_string, lang):
 def parseTokenizedText(html_body):
     # html5lib parser keeps English in place, unlike html.parser
     # which removes them
-    bs = BeautifulSoup(html_body, "html5lib")
+    if html_body is None:
+        raise ParsingError('Empty HTML body.')
+        return
 
-    # returns -1 if limit has been exceeded
+    bs = BeautifulSoup(html_body, "html5lib")
     if '使用次數已達上限' in str(bs.find('div', class_='header')):
-        return -1
+        raise ParsingError('Current IP has exceeded daily limit')
+        return
 
     # otherwise
     original_text = bs.find("textarea", id="search")
     tokens = bs.find("textarea", id="segmentResult")
     if tokens is None: # can't find token string
-        return None
+        raise ParsingError('Cannot find token string in HTML response.')
+        return
 
     # return original_text.text, re.sub(r'[\<\>]', '', tokens.text)
     return re.sub(r'[\<\>]', '', tokens.text) # otherwise
@@ -86,8 +119,8 @@ def parseTokenizedText(html_body):
 
 # this function came from
 # https://www.peterbe.com/plog/best-practice-with-retries-with-requests
-# Repeats binary backoff when the server returns a 500, 502 or 504, and stops
-# when the number of retries have depleted
+# Repeats binary backoff when the server returns a 500, 502 or 504,
+# then terminates when the number of retries has been depleted
 # According to RFC the cap for the number of tries is 16
 def requests_retry_session(retries=8,
                            backoff_factor=0.3,
@@ -165,55 +198,120 @@ def writeTableIndexLog(position):
     return False
 
 #-------------------------------------------------------------------------------
+# Error Classes
+class ParsingError(Exception):
+    pass
+
+#-------------------------------------------------------------------------------
+
+# database
+class Database(object):
+    def __init__(self, *,
+                 db_name, db_user, user_password,
+                 host, port):
+        super([object Object], self).__init__()
+        self.__conn = psycopg2.connect(
+            databse=db_name,
+            user=db_user,
+            password=user_password,
+            host=host,
+            port=port
+        )
+        self.__cur = None
+
+        if self.__conn:
+            self.__cur = self.__conn.cursor()
+
+    def createTable(self, *, tablename, schema):
+        # create table
+        if self.__cur and self.__conn: # if created successfully
+            self.__cur.execute("CREATE TABLE %s (% s);" % (tablename, schema ) )
+
+    def deleteEntryInTable(self, *, tablename, schema):
+        if self.__cur and self.__conn:
+            self.__cur.execute("DELETE from %s where %s;" % (tablename, schema ) )
+            self.__conn.commit
+
+    def updateEntryInTable(self, *, tablename, schema):
+        if self.__cur and self.__.conn:
+            self.__cur.execute("UPDATE %s set %where " % (tablename, schema ) )
+
+    def closeDatabase(self):
+        self.__cur.close()
+        self.__conn.close()
+
+
+
+
 
 # main function
 def main():
-    # argument checks
+    # Perform argument checks
     if len(sys.argv) != 4:
-        print("Invalid number of arguments.  Two required")
-        return
+        printUsage()
+        sys.exit("Error: Invalid number of arguments.  Four required")
 
-    if int(sys.argv[-1]) == 1:
-        # depickle wiki dump
-        df_wiki = depickleDataframe(
-            PICKLE_PATH + "pickled_wiki_entries_%s.p" % sys.argv[1])
-        startpos = 0
 
-    elif int(sys.argv[-1]) == 0:
-        df_wiki = depickleDataframe("backup.p")
+    # check if arguments are sound
+    # if yes, cast constants as integers,
+    # otherwise
+    SYS_PICKLE_FILE_NUM = sys.argv[1]
+    SYS_TIME_DELAY = sys.argv[2]
+    SYS_IS_RESUME = sys.argv[3]
+
+    if not SYS_PICKLE_FILE_NUM.isdigit() or \
+        not SYS_TIME_DELAY.isdigit() or \
+        not SYS_IS_RESUME.isdigit():
+        printUsage()
+        sys.exit("Error: At least one argument is not an integer")
+
+    SYS_PICKLE_FILE_NUM = int(SYS_PICKLE_FILE_NUM)
+    SYS_TIME_DELAY = int(SYS_TIME_DELAY)
+    SYS_IS_RESUME = int(SYS_IS_RESUME)
+
+
+    # depickle proper wiki dump
+    if SYS_IS_RESUME == 0:
+        try:
+            df_wiki = depickleDataframe(
+                PICKLE_PATH + "pickled_wiki_entries_%s.p" % SYS_PICKLE_FILE_NUM)
+        except FileNotFoundError:
+            sys.exit("Invalid pickle file")
+        startpos = 0 # if try is successful
+    elif SYS_IS_RESUME == 1:
+        try:
+            df_wiki = depickleDataframe("backup.p")
+        except FileNotFoundError:
+            sys.exit("Backup pickle file does not exist.")
         startpos = readTableIndexLog()
-        print(startpos)
+        # print(startpos)
     else:
-        print("Invalid argument in Pos 4.  Only 1 or 0 accepted.")
-        return
+        printUsage()
+        sys.exit("Error: Invalid argument in Pos 4.  Only 1 or 0 accepted.")
 
+    # print(startpos)
     # return
-
-    # Traditional Chinese
-    lang = 'tc'
-    delay = sys.argv[2]
 
 
     # init session
+    lang = 'tc' # Traditional Chinese
     payload = {'lang' : lang}
     s = requests_retry_session()
     # s = requests.Session()
+    if s is None:
+        sys.exit("Request session terminates prematurely.")
+
     gr = s.get(URL, params=payload)#, proxies={"http": PROXY, "https": PROXY})
     if gr == None:
-        print("Session failed")
-        return
-
+        s.close()
+        sys.exit("Init GET request failed.")
     # print(s.url)
     # print(s.encoding)
     # print(s.status_code)
     if gr.status_code != requests.codes.ok: # not returning a 200 OK
-        print("GET Request returns status code: %d" % gr.status_code)
         s.close()   # close the TCP session
-        return
-
-    # otherwise
-    print("GET Request ok")
-
+        sys.exit("GET Request returns status code: %d" % gr.status_code)
+    print("GET Request ok") # otherwise
 
     # Do this n times
     # get response from POST
@@ -221,39 +319,44 @@ def main():
         print('Scraping entry #%d\n' %i)
         text_length = len(text)
 
-        if text_length < 2:
-            print("Input string too short\n")
-
-        elif text_length > 1000:
-            print("Input string too long.  Must be 1000 characters or less.\n")
+        # Text length must be capped under 1000 characters.
+        # if too long or too short, do not send to server and move to next entry
+        if text_length < 10 and text_length > 1000:
+            print(
+                "Invalid input string. " + \
+                "Must be between 10 and 1000 characters. " + \
+                "Proceeding to next string input.\n"
+            )
 
         else:
-            try:
+            try: # send POST request and get response back
                 response = postUnsegmentedString(s, text, lang)
-            except:
+
+            # handle all errors, including socket errors and Ctrl+C termination
+            except: #(requests.RequestException, KeyboardInterrupt, requests.ConnectionError):
                 if i > 0:
                     pickleDataframe(df_wiki, 'backup.p')
-                    writeTableIndexLog(i + startpos)
-                s.close() # all cases
-                return
+                    writeTableIndexLog(i)
+                s.close() # all cases including i <= 0
+                sys.exit("Connection closed prematurely.")
 
-            else:
-                # PHPSESSID = dict_from_cookiejar(s.cookies)['PHPSESSID'] # get PHPSESSID
-                # print(PHPSESSID)
+            # if try clause is successful
+            # PHPSESSID = dict_from_cookiejar(s.cookies)['PHPSESSID'] # get PHPSESSID
+            # print(PHPSESSID)
+            try:
                 ptt_response = parseTokenizedText(response.text)
-                if ptt_response == -1:
-                    print("IP has exceeded daily limit.")
-                    pickleDataframe(df_wiki, 'backup.p')
-                    writeTableIndexLog(i + startpos)
-                    s.close()
-                    return
+            except:
+                pickleDataframe(df_wiki, 'backup.p')
+                writeTableIndexLog(i)
+                s.close()
+                sys.exit("IP has exceeded daily limit.")
 
-                # otherwise save to dataframe
-                df_wiki.loc[df_wiki.index == i + startpos, 'tokens'] = ptt_response
+            # otherwise save to dataframe
+            df_wiki.loc[df_wiki.index == i, 'tokens'] = ptt_response
 
-                print("delaying for %s seconds\n" % delay)
-                time.sleep(int(delay)) # to not crash server, delay next request for >2 seconds
-                print("------------------------")
+            print("delaying for %d seconds\n" % SYS_TIME_DELAY)
+            time.sleep(SYS_TIME_DELAY) # to not crash server, delay next request
+            print("------------------------")
 
 
     # # create a list to save all processed text
@@ -261,10 +364,11 @@ def main():
     # csv_header = ["original_text", "tokens"]
     # outputCSV("tokens.txt", csv_header, parsed_strings)
 
-    pickleDataframe(df_wiki, "updated_pickled_wiki_entries_%s.p" % sys.argv[1])
+    pickleDataframe(df_wiki,
+        "updated_pickled_wiki_entries_%s.p" % SYS_PICKLE_FILE_NUM)
 
     s.close() # close the TCP connection
-    return 0
+    sys.exit(0)
 
 if __name__ == '__main__':
     main()
