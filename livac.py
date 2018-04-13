@@ -233,7 +233,7 @@ def main():
             except:
                 if i > 0:
                     pickleDataframe(df_wiki, 'backup.p')
-                    writeTableIndexLog(i)
+                    writeTableIndexLog(i + startpos)
                 s.close() # all cases
                 return
 
@@ -244,12 +244,12 @@ def main():
                 if ptt_response == -1:
                     print("IP has exceeded daily limit.")
                     pickleDataframe(df_wiki, 'backup.p')
-                    writeTableIndexLog(i)
+                    writeTableIndexLog(i + startpos)
                     s.close()
                     return
 
                 # otherwise save to dataframe
-                df_wiki.loc[df_wiki.index == i, 'tokens'] = ptt_response
+                df_wiki.loc[df_wiki.index == i + startpos, 'tokens'] = ptt_response
 
                 print("delaying for %s seconds\n" % delay)
                 time.sleep(int(delay)) # to not crash server, delay next request for >2 seconds
