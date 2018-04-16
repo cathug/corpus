@@ -16,14 +16,11 @@ from bs4 import BeautifulSoup
 import numpy as np
 import pandas as pd
 
-# postgre database binders
-import psycopg2
-
 
 # global variables
 URL = 'http://www.livac.org/seg/livac_seg_index.php'
 # CSV_PATH = r'/home/lun/Desktop/'
-PICKLE_PATH = '/home/csrp/csrp/code/corpus/pickle/'
+PICKLE_PATH = '/home/lun/csrp/code/corpus/pickle/'
 
 PROXIES = {
   'http': 'http://113.254.44.242:80',
@@ -204,46 +201,6 @@ class ParsingError(Exception):
 
 #-------------------------------------------------------------------------------
 
-# database
-class Database(object):
-    def __init__(self, *,
-                 db_name, db_user, user_password,
-                 host, port):
-        super([object Object], self).__init__()
-        self.__conn = psycopg2.connect(
-            databse=db_name,
-            user=db_user,
-            password=user_password,
-            host=host,
-            port=port
-        )
-        self.__cur = None
-
-        if self.__conn:
-            self.__cur = self.__conn.cursor()
-
-    def createTable(self, *, tablename, schema):
-        # create table
-        if self.__cur and self.__conn: # if created successfully
-            self.__cur.execute("CREATE TABLE %s (% s);" % (tablename, schema ) )
-
-    def deleteEntryInTable(self, *, tablename, schema):
-        if self.__cur and self.__conn:
-            self.__cur.execute("DELETE from %s where %s;" % (tablename, schema ) )
-            self.__conn.commit
-
-    def updateEntryInTable(self, *, tablename, schema):
-        if self.__cur and self.__.conn:
-            self.__cur.execute("UPDATE %s set %where " % (tablename, schema ) )
-
-    def closeDatabase(self):
-        self.__cur.close()
-        self.__conn.close()
-
-
-
-
-
 # main function
 def main():
     # Perform argument checks
@@ -308,6 +265,9 @@ def main():
     # print(s.url)
     # print(s.encoding)
     # print(s.status_code)
+
+
+
     if gr.status_code != requests.codes.ok: # not returning a 200 OK
         s.close()   # close the TCP session
         sys.exit("GET Request returns status code: %d" % gr.status_code)
@@ -315,7 +275,8 @@ def main():
 
     # Do this n times
     # get response from POST
-    for i, text in enumerate(df_wiki['text'].tolist(), startpos ):
+    scrapes = df_wiki['text'].tolist()[startpos:]
+    for i, text in enumerate(scrapes, startpos):
         print('Scraping entry #%d\n' %i)
         text_length = len(text)
 
@@ -331,32 +292,29 @@ def main():
         else:
             try: # send POST request and get response back
                 response = postUnsegmentedString(s, text, lang)
+                ptt_response = parseTokenizedText(response.text)
+                # PHPSESSID = dict_from_cookiejar(s.cookies)['PHPSESSID'] # get PHPSESSID
+                # print(PHPSESSID)
+
+                # otherwise save to dataframe
+                df_wiki.loc[df_wiki.index == i, 'tokens'] = ptt_response
+                print("delaying for %d seconds\n" % SYS_TIME_DELAY)
+                time.sleep(SYS_TIME_DELAY) # to not crash server, delay next request
+                print("------------------------")
 
             # handle all errors, including socket errors and Ctrl+C termination
             except: #(requests.RequestException, KeyboardInterrupt, requests.ConnectionError):
-                if i > 0:
+                if i > startpos: # backup if processed at least one entry
                     pickleDataframe(df_wiki, 'backup.p')
                     writeTableIndexLog(i)
                 s.close() # all cases including i <= 0
-                sys.exit("Connection closed prematurely.")
 
-            # if try clause is successful
-            # PHPSESSID = dict_from_cookiejar(s.cookies)['PHPSESSID'] # get PHPSESSID
-            # print(PHPSESSID)
-            try:
-                ptt_response = parseTokenizedText(response.text)
-            except:
-                pickleDataframe(df_wiki, 'backup.p')
-                writeTableIndexLog(i)
-                s.close()
-                sys.exit("IP has exceeded daily limit.")
-
-            # otherwise save to dataframe
-            df_wiki.loc[df_wiki.index == i, 'tokens'] = ptt_response
-
-            print("delaying for %d seconds\n" % SYS_TIME_DELAY)
-            time.sleep(SYS_TIME_DELAY) # to not crash server, delay next request
-            print("------------------------")
+                if not response:
+                    sys.exit("Connection closed prematurely.")
+                if response and not ptt_response:
+                    sys.exit("IP has exceeded daily limit.")
+                # otherwise all other cases
+                sys.exit("Scraping interrupted prematurely.")
 
 
     # # create a list to save all processed text
