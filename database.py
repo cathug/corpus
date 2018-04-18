@@ -14,35 +14,35 @@ Base = declarative_base()
 class AV_Images(Base):
     __tablename__ = 'av_images'
 
-    # the probability of having a sha1 key collision is 1/2^160
-    avi_id = Column(Integer, Sequence('avi_id_seq'), primary_key=True) # for efficient lookup
-    sha1_digest = Column(LargeBinary)
+    avi_id = Column(Integer, Sequence('avi_id_seq'), primary_key=True)
     aviblob = Column(LargeBinary)
     filetype = Column(VARCHAR(length=255, convert_unicode=True))
 
 
 class LIHKGScrapes(Base):
-    __tablename__ = 'lihkg_text'
+    __tablename__ = 'lihkg_json'
 
-     # for efficient lookup
-    lihkg_id = Column(Integer, Sequence('lihkg_id_seq'), primary_key=True)
-    json_scrape = Column(JSONB)
+    lihkg_id = Column(Integer, Sequence('lihkg_json_id_seq'), primary_key=True)
+    json_binary = Column(JSONB)
 
     # leave one byte for null character
     topic = Column(VARCHAR(length=255, convert_unicode=True))
-    scraped_date = Column(TIMESTAMP(timezone=True))
+    file_name = Column(VARCHAR(length=255, convert_unicode=True))
+    last_reply_date = Column(TIMESTAMP(timezone=True))
+    emfile_name = Column(VARCHAR(length=255, convert_unicode=True))
+
 
 
 class HKGScrapes(Base):
-    __tablename__ = 'hkg_text'
+    __tablename__ = 'hkg_json'
 
-    # for efficient lookup
-    hkg_id = Column(Integer, Sequence('hkg_id_seq'), primary_key=True)
-    json_scrape = Column(JSONB)
+    hkg_id = Column(Integer, Sequence('hkg_json_id_seq'), primary_key=True)
+    json_binary = Column(JSONB)
 
     # leave one byte for null character
     topic = Column(VARCHAR(length=255, convert_unicode=True) )
-    scraped_date = Column(TIMESTAMP(timezone=True))
+    file_name = Column(VARCHAR(length=255, convert_unicode=True))
+    last_reply_date = Column(TIMESTAMP(timezone=True))
 
 
 def main():
