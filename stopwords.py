@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 DICT_PATH = r'/home/csrp/csrp/code/dictionaries/'
-DICT_PATH = r'/home/lun/csrp/code/dictionaries/'
+# DICT_PATH = r'/home/lun/csrp/code/dictionaries/'
 
 class Stopword:
 
@@ -26,7 +26,7 @@ class Stopword:
     # a private member function to calculate word probabilities
     def __computeWordProbabilities(self):
         df_words = []
-        # print(self.__total_num_text)
+        
         for index, list_of_tokens_in_each_text_document \
             in enumerate(self.__series_transcript.values):
 
@@ -37,9 +37,6 @@ class Stopword:
                 columns=['word']) )
 
             numwords = df_words[index].count()[0]
-            # print(numwords)
-        # print(df_words)
-        # return df_words
             df_words[index] = df_words[index].groupby('word')['word'].count()
             df_words[index] = pd.DataFrame(df_words[index])
             df_words[index].columns = ['num_instances']
