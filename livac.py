@@ -1,7 +1,7 @@
 # code to automate tokenization with online LIVAC tokenizer
 # TODO: add postgre and sqlalchemy code
 
-import re, csv, pickle, time, sys, textwrap
+import re, csv, pickle, time, sys, textwrap, os
 from itertools import cycle
 
 import requests
@@ -19,8 +19,10 @@ import pandas as pd
 
 # global variables
 URL = 'http://www.livac.org/seg/livac_seg_index.php'
-# CSV_PATH = r'/home/lun/Desktop/'
-PICKLE_PATH = '/home/lun/csrp/code/corpus/pickle/'
+# CSV_PATH = os.path.expanduser('~/Desktop/')
+PICKLE_PATH = os.path.expanduser('~/csrp/corpus/pickle/')
+PATH = os.path.expanduser('~/csrp/corpus/')
+
 
 PROXIES = {
   'http': 'http://113.254.44.242:80',
@@ -138,23 +140,24 @@ def requests_retry_session(retries=8,
 
 #-------------------------------------------------------------------------------
 
-# # Function to output parsed strings to a CSV file
-# # parameters:   file_name - intended file name
-# #               header_names - given header names
-# #               parsed_list - an ordered dictionary of elements
-# # returns:      the original text input and tokenized output
-# def outputCSV(file_name, header_names, parsed_list):
-#     with open(CSV_PATH + file_name, 'a', encoding='utf-8') as f:
-#         writer = csv.writer(f)
-#
-#         # first write a header
-#         writer.writerow(header_names)
-#
-#         # write row by row
-#         for original_text, tokens in parsed_list:
-#             writer.writerow([original_text, tokens])
-#
-#     assert(f.closed)
+# Function to output parsed strings to a CSV file
+# parameters:   file_name - intended file name
+#               header_names - given header names
+#               parsed_list - an ordered dictionary of elements
+# returns:      the original text input and tokenized output
+def outputCSV(file_name, header_names, parsed_list):
+    os.chdir(CSV_PATH)
+    with open(file_name, 'a', encoding='utf-8') as f:
+        writer = csv.writer(f)
+
+        # first write a header
+        writer.writerow(header_names)
+
+        # write row by row
+        for original_text, tokens in parsed_list:
+            writer.writerow([original_text, tokens])
+
+    assert(f.closed)
 
 #-------------------------------------------------------------------------------
 
@@ -230,13 +233,15 @@ def main():
     # depickle proper wiki dump
     if SYS_IS_RESUME == 0:
         try:
+            os.chdir(PICKLE_PATH)
             df_wiki = depickleDataframe(
-                PICKLE_PATH + "pickled_wiki_entries_%s.p" % SYS_PICKLE_FILE_NUM)
+                f"pickled_wiki_entries_{SYS_PICKLE_FILE_NUM}.p")
         except FileNotFoundError:
             sys.exit("Invalid pickle file")
         startpos = 0 # if try is successful
     elif SYS_IS_RESUME == 1:
         try:
+            os.chdir(PATH)
             df_wiki = depickleDataframe("backup.p")
         except FileNotFoundError:
             sys.exit("Backup pickle file does not exist.")
@@ -323,7 +328,7 @@ def main():
     # outputCSV("tokens.txt", csv_header, parsed_strings)
 
     pickleDataframe(df_wiki,
-        "updated_pickled_wiki_entries_%s.p" % SYS_PICKLE_FILE_NUM)
+        f"updated_pickled_wiki_entries_{SYS_PICKLE_FILE_NUM}.p" )
 
     s.close() # close the TCP connection
     sys.exit(0)

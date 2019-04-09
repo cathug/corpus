@@ -1,7 +1,7 @@
-import pickle
+import pickle, os
 
 
-PATH = '/home/csrp/csrp/code/corpus/pickled_corpuses/'
+PATH = os.path.expanduser('~/csrp/corpus/pickled_corpuses/')
 
 # a class wrapper for importing HK Cantonese Corpus
 class HKCantoneseCorpus:
@@ -10,7 +10,8 @@ class HKCantoneseCorpus:
 
     # loads corpus without any punctuations
     def loadTokenizedSentences(self):
-        with open("%shkcancorpus_tokens.p" % PATH, 'rb') as f:
+        os.chdir(PATH)
+        with open("hkcancorpus_tokens.p", 'rb') as f:
             self.__sentences = pickle.load(f, encoding='utf-8')
 
         if not f.closed:
@@ -23,7 +24,8 @@ class HKCantoneseCorpus:
 
     # loads tagged corpus with out any punctuations
     def loadTaggedSentences(self):
-        with open("%shkcancorpus_pos_tokens.p" % PATH, 'rb') as f:
+        os.chdir(PATH)
+        with open("hkcancorpus_pos_tokens.p", 'rb') as f:
             self.__sentences = pickle.load(f, encoding='utf-8')
 
         if not f.closed:
@@ -44,7 +46,8 @@ class MidCenturyHKCantoneseMovieCorpus:
 
     # loads corpus without any punctuations
     def loadTokenizedSentences(self):
-        with open("%smodcenturycanmoviecorpus_tokens.p" % PATH, 'rb') as f:
+        os.chdir(PATH)
+        with open("modcenturycanmoviecorpus_tokens.p", 'rb') as f:
             self.__sentences = pickle.load(f, encoding='utf-8')
 
         if not f.closed:

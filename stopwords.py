@@ -6,9 +6,9 @@
 
 import numpy as np
 import pandas as pd
+import os
 
-DICT_PATH = r'/home/csrp/csrp/code/dictionaries/'
-# DICT_PATH = r'/home/lun/csrp/code/dictionaries/'
+DICT_PATH = os.path.expanduser('~/csrp/dictionaries/')
 
 class Stopword:
 
@@ -133,6 +133,7 @@ class Stopword:
             return False
 
         # otherwise
-        self.__df_im_stopwords['index'].head(num_stopwords).to_csv(DICT_PATH + \
+        os.chdir(DICT_PATH)
+        self.__df_im_stopwords['index'].head(num_stopwords).to_csv(
             filename, sep=' ', index=False, header=False)
         return True
