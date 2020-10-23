@@ -1,90 +1,133 @@
-t n y1 p m n u v n y .
-p d v xnr y1 m v r ns u n u n y1 , d v v y1 nt p r u vn f y .
-v .
+e , r g1 d vu v u r u n y ?
+r u n y ?
+c d v n a u y .
+e e .
+c r v vu r v v y ?
+e , r d v d f v u v u .
+d v a v r q n , d vu v u q n r n y .
+c r r n d vu d d vu a u , c y1 ns , c r n d vu a u c y .
 e .
-d v v u c .
-c v r v n .
+c r v v u .
+c r m v v u r q n , c r vu v r q n v y ?
+e , n y ?
+n v1 d q y .
+r d v q , e , nz y1 , e , xnz y1 , e , d v1 m n n y .
+c m v ns a u y , d d a u .
+r vu d v r m q n ?
+v c r v r n , c v v v v u n v v y ?
+n d d vu v a u y .
+c c d v v q n a u y .
+r v u n y y d d .
+c d t r n f v v1 r n u r n vn y ?
+e , v1 xnz u xv xn y1 , d v1 , e , xn y1 , d v1 , e , xnz u xn n y d v .
+d n y .
+c c d r vu v d v y ?
+e , d xa y y v .
+c c v a n v v , n v a d d d a y y .
+c v1 q n d v , d vu d vu d r v r u n y1 , r d v u a , d vu v r a u n d v , vu vk - vk v y ?
+e , vu vu y .
+c c v n y1 v vu v c d v n d vu , d v d u .
+c c r v v v y1 , v m q n y1 , v1 m d a d v1 , e , d a d v1 .
+c d y1 d v y1 r q n v u v u d d v y y .
+c r v n y .
 e .
-v u q v n y1 a u v r y .
-c c r n r r v y ?
-e r n y1 c d n u n d v u d y .
-v r t c v .
-v nr nr , v ns .
-c y1 d v u p r v , nr nr y1 p n f v y , e .
-c y1 d , e , d v q n .
-v vu v r m q n p q n v .
-v r v .
-c r c v - e ?
-v n - c n v v " e , r vu v u m n v u n .
-v , t r d v r .
-d v d v1 n v .
-c v v r u n p nr nr n y1 , d a v y y .
-a n y v .
-c r v d q xn v a u y y vu .
-d v d v y .
-d v y .
-d d v y .
-d d v y .
-d q xn u n d d v y .
-d r q xn y .
-c c c d v1 i , r d vu v " e , c r v v vu v v nr nr y ?
-" c y .
-v nr nr v n v u d a y y .
-d v u n y y .
-c d n r n y1 , c i .
-v v1 n d ag - a y .
-r v c t n y1 , q xn p b , " e " c , e .
-v1 n y r q v .
-c v v r n y .
-r v - v n u n , r v .
-c r v v ns u n v a n y ?
-c d r d v z d v a y y , c r n ?
-r n n a y .
-v .
-r v d p r n c v c r v v , c r d v v a v y .
-a .
-n n .
-d v .
-v d v u t d v n v v u r u n y .
-r u n v v r m q n y y .
-c r d a n .
-v v a n .
-v c y y .
+c d p r t v d t r v1 v u y c v - ?
+v1 v u y d .
+g2 d a y ?
+e , d d a .
+c v r v r n u n v d u y y .
 e .
-v1 n .
-r v r d v r y y , v d v .
-v .
-d v1 a u .
-v1 a u d .
-c ns v d vu v m q r u n y y , n v .
-v .
-a .
-ns v m q d v u v1 m q v nr nr u d v v u n c .
-" e r n ?
-d v y y .
-c r .
-v v y ?
-" r - r v n y y " c .
+e e .
+c r v1 v vu p t n vu d v v y ?
+vu y .
+e .
+v1 q n vu v m v d v r r vu v , r v d a u n v v r n y y ?
+e , v q n n y .
+c p q n v u y .
+e .
+c r n d m n y ?
+e , v y .
+d , c n d v q n n v u y .
+c v e , v r n n y1 , c v n d v r n u n y ?
 v y .
+c d v r d d v r r q n v d d v y .
+e .
+c r vu v u r r n v p v v n f , a v1 r n y ?
+e v u q v xn y1 , c t v v u q n y .
+vu c v u r u n n y .
+v v c d a c y .
+r v v a .
+v c r r q n d v u v r u n y .
+r vu v u r t r xn r v v d v y " v " ?
+xn d v d v y .
+d d v - v d a m q n v y .
+e e .
+d v r t c vu v d v , d r n d d a u .
+c y1 d n y1 d v v d u d a y .
+c v a u xn t d v vu v u y .
+v v ns r v y q xn ?
+e d v1 m n y .
+e .
+c ns d vu v y , r n ?
+t d v1 y y t .
+c d v1 r n .
+d n d d vu d a y , t d .
+c d r d r d v , p ns d v1 m n - c d n r c u v y1 , e , n y1 , n r c y .
+c v u y t d .
+c t r v d q n d d a y vu .
+c c t v1 r v u n vu v r c , r d vu v v m q y ?
+vu v y .
+c r v r v a u q xn y .
+r - a d c r y ?
+e , r r v n y .
+c v r v n , e , r m n r m n c y .
+e .
+c t r xn y1 v d a y1 , v m n y y .
+c c r v v v r q n t m d v m m n y1 , m n d d - d a y y d .
+e .
+c n a u n .
 v y .
-d d v y y .
-d v y y .
-" r v n y .
-" r v d v y y .
-" r q d d d v y , vu v v n a v .
-e , ns v m q d v d u .
-v .
-n .
-d q d v c u .
+c c r v t r n r a n y1 , v m m n d d a y .
+c r v u v , c c r v v n y1 , d v r y y .
+d v v r n ?
+c v .
+v e , r v n r y .
+e .
+c r n u n .
 v y .
-c d l c ns u n , c v v v v - c n p c xn r v .
-ns u n d d v y .
-c v n v i v y y .
-r c v , v v n , c c v v u , vu p c m q n v u a m y1 , d d v v u i y y .
-r v v v y y n .
-c c y y .
-d y .
-c d c r v r m n u n u n y1 , v c v u d a y .
-p r m q n y1 , n n y , v y1 c ns u n y1 d v d a u .
-d r v u u , v u u u y1 d v d , e , a a d a u m q n .
-xl1 xn .
+c a u .
+c v r v ng - v u v n v v v d y1 , d d v n d v m q a n v y .
+r vu v u n v v d a d a y ?
+v n c .
+v r q n y .
+c r n a u , c y1 d a n v q n vu a u y .
+e .
+c c t a d , e , ns y1 d d v y y , q c v n n r .
+e c r y ?
+c m d v c v q r u n , c n , v u , e , c xn y1 , xn y1 , c p n y1 v v y1 , c vu v d r u n y .
+e .
+d v1 q n y1 , t d d v q xn n y .
+d q n v v n vu v q n , d vu v u q n a y y .
+v v a y ?
+vu v y .
+c r vn y1 d v1 r a r c n u vn d a y y , d i u y .
+c r - r - r d r d d v v q n n y .
+e .
+c xn d a , r d a , r d d v y .
+c r v m c r v v , r d vu v r q n .
+c v1 n v v p m u n , c q n a r v d a .
+v d v u d v u y .
+c d vu d d v n u n .
+c v v c v1 m xn r v d - a vu p , e , n u , c n f u n y1 , d d v y y .
+r vu v n y .
+r v v ?
+v d xn a u y .
+e .
+c xn y1 , m n v v1 d a y .
+c n y1 d v a u n c y .
+c r d d v n y , d r vu v xn y ?
+e .
+c q n v r q n a y .
+c r vu d .
+c c r t v r v v m q n v v , r d v a m q n p m q n m y .
+c c r v v r q n y1 , r d d v u r t y y .
