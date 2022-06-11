@@ -1,6 +1,6 @@
 # corpus
 
-last updated: Oct 23, 2020
+last updated: June 11, 2022
 ---
 
 ## PIP requirements
@@ -11,7 +11,7 @@ last updated: Oct 23, 2020
 
 ## Highlights
 This repository contains a few tools for doing Cantonese NLP from scratch:
-+ PyCantonese/HKCanCor Spoken Cantonese Corpus (pickle and raw `CHAT` files)
++ PyCantonese/HKCanCor Spoken Cantonese Corpus (pickle and pos/tags extracted from raw `CHAT` files)
 + Baptist U 20th Century Black and White Movie Spoken Cantonese Corpus (pickle and raw tokenized `csv` files)
 + `hkcancorpus.ipynb`: Code for processing PyCantonese Corpus and compile dictionaries (tokens and POS tags) and HMM training data (BMES tagging and POS tagging) for `Jieba` Tokenizer 
 + `stopwords.py`: Stopword List Generator based on Zou et. al 2006, "Automatic Construction of Chinese Stop Word Lists": implemented in `pandas` and `hkcancorpus.ipynb` for usage.
